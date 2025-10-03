@@ -3,17 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>WebXR Dichoptic v5 (완전 통합본)</title>
+<title>WebXR Dichoptic v7 (완전 통합본)</title>
 <style>
   html, body { margin:0; height:100%; background:#000; color:#ddd; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
   canvas { display:block; }
-  :root { --panelW: 400px; }
-  #dock {
-    position: fixed; top: 10px; right: 10px; width: var(--panelW);
-    max-height: 80vh; overflow: auto; padding: 10px; border-radius: 12px;
-    background: rgba(20,20,25,.9); color: #eaeaea; z-index: 10000; border: 1px solid #333;
-    font-size: 14px;
-  }
+  :root { --panelW: 410px; }
+  #dock { position: fixed; top: 10px; right: 10px; width: var(--panelW); max-height: 84vh; overflow: auto; padding: 10px;
+          border-radius: 12px; background: rgba(20,20,25,.92); color: #eaeaea; z-index: 10000; border: 1px solid #333; font-size: 14px; }
   #dock .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0; }
   #dock .section { margin: 8px 0; padding-bottom: 8px; border-bottom: 1px dashed #3a3a3a; }
   #dock summary { cursor:pointer; font-weight:600; }
@@ -24,11 +20,8 @@
   .tag { padding:2px 6px; border:1px solid #555; border-radius:8px; background:#222; font-size:12px }
   /* Upload overlay */
   #overlay { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:10001; display:none; }
-  #panel {
-    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:min(880px,94vw); max-height:80vh; overflow:auto;
-    background:#141414; color:#eee; border:1px solid #444; border-radius:14px; padding:12px;
-  }
+  #panel { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:min(920px,94vw); max-height:80vh; overflow:auto;
+           background:#141414; color:#eee; border:1px solid #444; border-radius:14px; padding:12px; }
   .dropzone { border:2px dashed #555; border-radius:10px; padding:16px; text-align:center; margin:8px 0; }
   .dropzone.highlight { border-color:#9cf; background:rgba(100,150,255,.08); }
   .hidden { display:none !important; }
@@ -36,12 +29,10 @@
   .box { border:1px solid #333; border-radius:10px; padding:10px; }
 </style>
 <script type="importmap">
-  {
-    "imports": {
-      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-    }
-  }
+  { "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }}
 </script>
 </head>
 <body>
@@ -85,9 +76,7 @@
       <label><input type="checkbox" id="altEnable"> 교대</label>
       <label>유지</label><input id="altHold" type="range" min="1" max="20" step="0.5" value="3"><span id="altHoldVal">3.0s</span>
     </div>
-    <div class="row">
-      <label><input type="radio" name="altMode" id="altBoth" checked> 양안 반대 교대</label>
-    </div>
+    <div class="row"><label><input type="radio" name="altMode" id="altBoth" checked> 양안 반대 교대</label></div>
     <div class="row">
       <label><input type="radio" name="altMode" id="altFixL"> 좌안 픽스</label>
       <select id="fixLType"><option value="metal">좌=메탈릭</option><option value="fhd">좌=FHD</option></select>
@@ -101,7 +90,7 @@
 
   <details class="section" open>
     <summary>패턴 교대 (픽스 시 작동)</summary>
-    <div class="row" style="opacity:.85">좌안 또는 우안을 픽스하면, 반대쪽 눈에 아래 패턴이 적용됩니다. 각 세그먼트는 <b>1초간 Hz로 교대</b>하고, 이어서 <b>Rest(초)</b>만큼 쉬는 것을 의미합니다. 4세그먼트가 순환 반복됩니다.</div>
+    <div class="row" style="opacity:.85">좌안 또는 우안을 픽스하면 반대쪽 눈에 아래 패턴이 적용됩니다. 각 세그먼트는 <b>1초간 Hz로 교대</b> → <b>Rest(초)</b> 휴지. 4세그먼트가 순환 반복.</div>
 
     <div class="row"><strong>좌안 패턴 (우안 픽스 시 좌안이 교대)</strong> <label><input type="checkbox" id="patLEn"> 사용</label> <span id="patLStat" class="tag">OFF</span></div>
     <div class="row">S1: 1초에 <input id="patLHz1" type="number" min="1" max="10" step="1" value="2" style="width:64px"> 번 · Rest <input id="patLRe1" type="number" min="0" max="20" step="0.5" value="5" style="width:72px"> 초</div>
@@ -162,12 +151,13 @@
       <summary>이미지 업로드 (통합: 좌/우 동일)</summary>
       <div class="row">
         <button class="btn" id="applyImagesC">적용/미리보기</button>
-        <button class="btn" id="pickImagesC">이미지 파일 선택</button>
+        <button class="btn" id="pickImagesC">이미지 파일 추가</button>
+        <button class="btn" id="pickFolderC">폴더 추가</button>
         <input id="imageFilesC" type="file" accept="image/*" multiple style="display:none">
-        <label>폴더</label><input id="imageFolderC" type="file" accept="image/*" webkitdirectory directory multiple>
+        <input id="imageFolderC" type="file" accept="image/*" webkitdirectory directory multiple style="display:none">
         <span id="imgStatusC" class="tag"></span>
       </div>
-      <div id="dropImagesC" class="dropzone">이미지를 드래그 앤 드롭 (좌/우 동일 적용)</div>
+      <div id="dropImagesC" class="dropzone">이미지 드래그 앤 드롭 (좌/우 동일 적용)</div>
     </details>
 
     <div class="col2">
@@ -176,9 +166,10 @@
           <summary>이미지 업로드 (좌안)</summary>
           <div class="row">
             <button class="btn" id="applyImagesL">적용/미리보기</button>
-            <button class="btn" id="pickImagesL">이미지 파일 선택</button>
+            <button class="btn" id="pickImagesL">이미지 파일 추가</button>
+            <button class="btn" id="pickFolderL">폴더 추가</button>
             <input id="imageFilesL" type="file" accept="image/*" multiple style="display:none">
-            <label>폴더</label><input id="imageFolderL" type="file" accept="image/*" webkitdirectory directory multiple>
+            <input id="imageFolderL" type="file" accept="image/*" webkitdirectory directory multiple style="display:none">
             <span id="imgStatusL" class="tag"></span>
           </div>
           <div id="dropImagesL" class="dropzone">좌안용 이미지를 드래그 앤 드롭</div>
@@ -189,9 +180,10 @@
           <summary>이미지 업로드 (우안)</summary>
           <div class="row">
             <button class="btn" id="applyImagesR">적용/미리보기</button>
-            <button class="btn" id="pickImagesR">이미지 파일 선택</button>
+            <button class="btn" id="pickImagesR">이미지 파일 추가</button>
+            <button class="btn" id="pickFolderR">폴더 추가</button>
             <input id="imageFilesR" type="file" accept="image/*" multiple style="display:none">
-            <label>폴더</label><input id="imageFolderR" type="file" accept="image/*" webkitdirectory directory multiple>
+            <input id="imageFolderR" type="file" accept="image/*" webkitdirectory directory multiple style="display:none">
             <span id="imgStatusR" class="tag"></span>
           </div>
           <div id="dropImagesR" class="dropzone">우안용 이미지를 드래그 앤 드롭</div>
@@ -203,7 +195,7 @@
       <summary>영상 업로드</summary>
       <div class="row">
         <button class="btn" id="applyVideos">적용/미리보기</button>
-        <button class="btn" id="pickVideos">영상 파일 선택</button>
+        <button class="btn" id="pickVideos">영상 파일 추가</button>
         <input id="videoFiles" type="file" accept="video/*" multiple style="display:none">
         <span id="vidStatus" class="tag"></span>
       </div>
@@ -224,7 +216,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 document.body.appendChild(renderer.domElement);
 
-// VR Button + our own trigger
 const vrBtn = VRButton.createButton(renderer);
 vrBtn.style.position = 'fixed'; vrBtn.style.left='12px'; vrBtn.style.bottom='12px'; vrBtn.style.zIndex='10000';
 document.body.appendChild(vrBtn);
@@ -236,26 +227,16 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.1).texture;
 scene.add(new THREE.HemisphereLight(0xffffff,0x222233,0.7));
 
-// ========= Helpers =========
-function safeDispose(obj){
-  if(!obj) return;
-  obj.traverse?.(c=>{
-    if(c.isMesh){
-      c.geometry?.dispose?.();
-      const m=c.material;
-      if(Array.isArray(m)) m.forEach(x=>x?.dispose?.()); else m?.dispose?.();
-    }
-  });
-}
-function clamp(a,b,c){ return Math.max(b, Math.min(c,a)); }
-
-// ========= Groups (per eye) =========
+// ========= Groups =========
 const leftGroup = new THREE.Group();
 const rightGroup = new THREE.Group();
-// Assign distinct layers for per-eye rendering (1=Left, 2=Right)
 leftGroup.layers.set(1);
 rightGroup.layers.set(2);
 scene.add(leftGroup, rightGroup);
+
+// ========= Helpers =========
+function safeDispose(obj){ if(!obj) return; obj.traverse?.(c=>{ if(c.isMesh){ c.geometry?.dispose?.(); const m=c.material; if(Array.isArray(m)) m.forEach(x=>x?.dispose?.()); else m?.dispose?.(); }}); }
+function clamp(a,b,c){ return Math.max(b, Math.min(c,a)); }
 
 // ========= Image plane shader =========
 const imgVert = `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);} `;
@@ -266,7 +247,6 @@ uniform vec2  uOffset;     // fusion offset
 uniform float uDotSize;    // central dot
 uniform float uNonius;     // show nonius
 varying vec2 vUv;
-
 vec3 sat(vec3 c, float s){ float l=dot(c, vec3(0.2126,0.7152,0.0722)); return mix(vec3(l), c, s); }
 vec3 toneMetal(vec3 c){
   vec3 h = pow(c, vec3(0.75));
@@ -291,21 +271,15 @@ void main(){
 function makeImagePlane(){
   const geo = new THREE.PlaneGeometry(1.8, 1.0125);
   const mat = new THREE.ShaderMaterial({
-    uniforms:{
-      uTex:{value:null},
-      uMetal:{value:0},
-      uOffset:{value:new THREE.Vector2(0,0)},
-      uDotSize:{value:12.0},
-      uNonius:{value:0.0}
-    },
+    uniforms:{ uTex:{value:null}, uMetal:{value:0}, uOffset:{value:new THREE.Vector2(0,0)}, uDotSize:{value:12.0}, uNonius:{value:0.0} },
     vertexShader: imgVert, fragmentShader: imgFrag, transparent:true
   });
   return new THREE.Mesh(geo, mat);
 }
-const imgLeft = makeImagePlane();  imgLeft.position.set(-0.42,1.45,-1.2505); leftGroup.add(imgLeft);  imgLeft.visible=false;
-const imgRight= makeImagePlane();  imgRight.position.set( 0.42,1.45,-1.2495); rightGroup.add(imgRight); imgRight.visible=false;
+const imgLeft = makeImagePlane();  imgLeft.layers.set(1);  imgLeft.position.set(-0.42,1.45,-1.2505); leftGroup.add(imgLeft);  imgLeft.visible=false;
+const imgRight= makeImagePlane();  imgRight.layers.set(2); imgRight.position.set( 0.42,1.45,-1.2495); rightGroup.add(imgRight); imgRight.visible=false;
 
-// ========= Video planes =========
+// ========= Video =========
 let videoEl = null, vidLeft=null, vidRight=null;
 function buildVideoMeshes(){
   if(!videoEl) return;
@@ -313,13 +287,13 @@ function buildVideoMeshes(){
   const makeMat = ()=> imgLeft.material.clone();
   const mL = makeMat(); mL.uniforms.uTex.value = tex;
   const mR = makeMat(); mR.uniforms.uTex.value = tex;
-  vidLeft = new THREE.Mesh(new THREE.PlaneGeometry(1.8,1.0125), mL);
-  vidRight= new THREE.Mesh(new THREE.PlaneGeometry(1.8,1.0125), mR);
+  vidLeft = new THREE.Mesh(new THREE.PlaneGeometry(1.8,1.0125), mL);  vidLeft.layers.set(1);
+  vidRight= new THREE.Mesh(new THREE.PlaneGeometry(1.8,1.0125), mR); vidRight.layers.set(2);
   vidLeft.position.copy(imgLeft.position); vidRight.position.copy(imgRight.position);
   leftGroup.add(vidLeft); rightGroup.add(vidRight);
 }
 
-// ========= 3D objects =========
+// ========= Objects =========
 function makeMaterial(color, metallic){
   const c = new THREE.Color(color);
   if(metallic) return new THREE.MeshPhysicalMaterial({ color:c, metalness:1.0, roughness:0.08, clearcoat:0.9, envMapIntensity:2.0 });
@@ -339,8 +313,8 @@ function rebuildObjects(){
   const lc = document.getElementById('leftColor').value;
   const rc = document.getElementById('rightColor').value;
   const type = document.getElementById('objectType').value;
-  leftObj  = new THREE.Mesh(makeGeometry(type), makeMaterial(lc, false));
-  rightObj = new THREE.Mesh(makeGeometry(type), makeMaterial(rc, true));
+  leftObj  = new THREE.Mesh(makeGeometry(type), makeMaterial(lc, false)); leftObj.layers.set(1);
+  rightObj = new THREE.Mesh(makeGeometry(type), makeMaterial(rc, true)); rightObj.layers.set(2);
   leftObj.position.copy(imgLeft.position); rightObj.position.copy(imgRight.position);
   leftGroup.add(leftObj); rightGroup.add(rightObj);
 }
@@ -355,8 +329,6 @@ let imagesL=[], curImageL=-1;
 let imagesR=[], curImageR=-1;
 let imgDwell=3.0, imgAuto=false, imgRand=true, nextAt=0;
 let videos=[], videoIdx=-1;
-
-// Pattern states
 let patLEn=false, patREn=false;
 let patL=[{hz:2,rest:5},{hz:3,rest:5},{hz:4,rest:5},{hz:2,rest:5}];
 let patR=[{hz:2,rest:5},{hz:3,rest:5},{hz:4,rest:5},{hz:2,rest:5}];
@@ -401,15 +373,17 @@ function wireDZ(el, cb){
   el.addEventListener('drop', (e)=>{ el.classList.remove('highlight'); cb(e.dataTransfer.files); });
 }
 
-// ========= Combined image handling =========
+// ========= Combined image handling (APPEND) =========
 function handleImagesCombined(fileList){
   const arr = Array.from(fileList||[]).filter(f=> f.type.startsWith('image/'));
-  imagesC = arr.map(f=> ({ name:f.name, url:URL.createObjectURL(f) }));
+  const mapped = arr.map(f=> ({ name:f.name, url:URL.createObjectURL(f) }));
+  const names = new Set(imagesC.map(x=>x.name));
+  const add = mapped.filter(x=> !names.has(x.name));
+  imagesC = imagesC.concat(add);
   document.getElementById('imgStatusC').textContent = imagesC.length ? `${imagesC.length}장` : '없음';
 }
 async function showImageCombined(idx){
-  const modeEl = document.getElementById('uploadMode');
-  if(modeEl && modeEl.value!=='combined') return;
+  const modeEl = document.getElementById('uploadMode'); if(modeEl && modeEl.value!=='combined') return;
   if(!imagesC.length) return;
   curImageC = clamp(idx,0,imagesC.length-1);
   const loader = new THREE.TextureLoader();
@@ -421,28 +395,35 @@ async function showImageCombined(idx){
   if(vidLeft) vidLeft.visible=false; if(vidRight) vidRight.visible=false;
 }
 function nextImageCombined(){
-  const modeEl = document.getElementById('uploadMode');
-  if(modeEl && modeEl.value!=='combined') return;
+  const modeEl = document.getElementById('uploadMode'); if(modeEl && modeEl.value!=='combined') return;
   if(imagesC.length===0) return;
   if(imgRand) curImageC = Math.floor(Math.random()*imagesC.length);
   else curImageC = (curImageC+1)%imagesC.length;
   showImageCombined(curImageC);
 }
 
-// ========= Split image handling =========
+// ========= Split image handling (APPEND) =========
 function handleImagesSide(side, fileList){
   const arr = Array.from(fileList||[]).filter(f=> f.type.startsWith('image/'));
   const mapped = arr.map(f=> ({ name:f.name, url:URL.createObjectURL(f) }));
-  if(side==='L'){ imagesL = mapped; document.getElementById('imgStatusL').textContent = imagesL.length ? `${imagesL.length}장` : '없음'; }
-  else         { imagesR = mapped; document.getElementById('imgStatusR').textContent = imagesR.length ? `${imagesR.length}장` : '없음'; }
+  if(side==='L'){
+    const names = new Set(imagesL.map(x=>x.name));
+    const add = mapped.filter(x=> !names.has(x.name));
+    imagesL = imagesL.concat(add);
+    document.getElementById('imgStatusL').textContent = imagesL.length ? `${imagesL.length}장` : '없음';
+  } else {
+    const names = new Set(imagesR.map(x=>x.name));
+    const add = mapped.filter(x=> !names.has(x.name));
+    imagesR = imagesR.concat(add);
+    document.getElementById('imgStatusR').textContent = imagesR.length ? `${imagesR.length}장` : '없음';
+  }
 }
 async function showImageSide(side, idx){
   const list = (side==='L')? imagesL : imagesR;
   if(!list.length) return;
   const loader = new THREE.TextureLoader();
   const tex = await new Promise(res=> loader.load(list[idx].url, t=>res(t)));
-  if(side==='L'){ imgLeft.material.uniforms.uTex.value = tex; imgLeft.visible = true; }
-  else          { imgRight.material.uniforms.uTex.value = tex; imgRight.visible = true; }
+  if(side==='L'){ imgLeft.material.uniforms.uTex.value = tex; imgLeft.visible = true; } else { imgRight.material.uniforms.uTex.value = tex; imgRight.visible = true; }
   if(leftObj) leftObj.visible=false; if(rightObj) rightObj.visible=false;
   if(vidLeft) vidLeft.visible=false; if(vidRight) vidRight.visible=false;
 }
@@ -454,7 +435,7 @@ function nextImagePair(){
 // ========= Video handling =========
 function handleVideos(fileList){
   const arr = Array.from(fileList||[]).filter(f=> f.type.startsWith('video/'));
-  videos = arr; videoIdx = -1;
+  videos = videos.concat(arr);
   document.getElementById('vidStatus').textContent = videos.length ? `${videos.length}개` : '없음';
 }
 function nextVideo(){
@@ -488,20 +469,14 @@ function samplePattern(pat, t){
     if(x>=b.start && x<b.end){
       const local = x - b.start;
       if(local <= 1.0){
-        const flips = Math.floor(local * b.hz); // flip every 1/hz
+        const flips = Math.floor(local * b.hz);
         return (flips % 2)===1; // odd -> metallic
       } else {
-        return false; // rest = FHD
+        return false; // rest -> FHD 유지
       }
     }
   }
   return false;
-}
-function readPatternUI(){
-  patLEn = document.getElementById('patLEn').checked;
-  patREn = document.getElementById('patREn').checked;
-  const read = (pfx)=> [1,2,3,4].map(i=> ({ hz:Number(document.getElementById(`${pfx}Hz${i}`).value)||1, rest:Number(document.getElementById(`${pfx}Re${i}`).value)||0 }));
-  patL = read('patL'); patR = read('patR');
 }
 
 // ========= UI Wiring =========
@@ -539,12 +514,11 @@ function setSourceModeUI(){
   applyFusion();
 }
 sourceMode.addEventListener('change', setSourceModeUI);
-
 document.getElementById('objectType').addEventListener('change', rebuildObjects);
 document.getElementById('leftColor').addEventListener('input', rebuildObjects);
 document.getElementById('rightColor').addEventListener('input', rebuildObjects);
 
-// Alternation controls
+// Alternation
 const altEnable = document.getElementById('altEnable');
 const altHoldEl = document.getElementById('altHold'); const altHoldVal=document.getElementById('altHoldVal');
 const altBoth = document.getElementById('altBoth'); const altFixL = document.getElementById('altFixL'); const altFixR = document.getElementById('altFixR');
@@ -571,7 +545,7 @@ const fusionDot = document.getElementById('fusionDot'); const fusionDotVal=docum
 fusionDot.addEventListener('input', ()=>{ fusionDotVal.textContent=fusionDot.value+'px'; setFusionDotSize(Number(fusionDot.value)); });
 document.getElementById('noniusOn').addEventListener('change', (e)=> setNonius(e.target.checked));
 
-// Image upload wiring (Combined)
+// Image upload wiring
 const uploadMode = document.getElementById('uploadMode');
 const imgSecC = document.getElementById('imgSecC');
 const col2Split = document.querySelector('#panel .col2');
@@ -586,11 +560,13 @@ syncUploadMode();
 
 function wireCombined(){
   const pickImagesC = document.getElementById('pickImagesC');
+  const pickFolderC = document.getElementById('pickFolderC');
   const imageFilesC = document.getElementById('imageFilesC');
   const imageFolderC = document.getElementById('imageFolderC');
   const applyImagesC = document.getElementById('applyImagesC');
   const dropImagesC = document.getElementById('dropImagesC');
   pickImagesC.addEventListener('click', ()=> imageFilesC.click());
+  pickFolderC.addEventListener('click', ()=> imageFolderC.click());
   imageFilesC.addEventListener('change', (e)=> handleImagesCombined(e.target.files));
   imageFolderC.addEventListener('change', (e)=> handleImagesCombined(e.target.files));
   wireDZ(dropImagesC, handleImagesCombined);
@@ -598,26 +574,29 @@ function wireCombined(){
 }
 wireCombined();
 
-// Image upload wiring (Split L/R)
 function wireSplit(){
-  // L
+  // Left
   const pickImagesL = document.getElementById('pickImagesL');
+  const pickFolderL = document.getElementById('pickFolderL');
   const imageFilesL = document.getElementById('imageFilesL');
   const imageFolderL = document.getElementById('imageFolderL');
   const applyImagesL = document.getElementById('applyImagesL');
   const dropImagesL = document.getElementById('dropImagesL');
   pickImagesL.addEventListener('click', ()=> imageFilesL.click());
+  pickFolderL.addEventListener('click', ()=> imageFolderL.click());
   imageFilesL.addEventListener('change', (e)=> handleImagesSide('L', e.target.files));
   imageFolderL.addEventListener('change', (e)=> handleImagesSide('L', e.target.files));
   wireDZ(dropImagesL, (files)=> handleImagesSide('L', files));
   applyImagesL.addEventListener('click', ()=>{ if(imagesL.length){ curImageL = 0; showImageSide('L', curImageL); overlay.style.display='none'; sourceMode.value='images'; nextAt = performance.now()/1000 + imgDwell; } });
-  // R
+  // Right
   const pickImagesR = document.getElementById('pickImagesR');
+  const pickFolderR = document.getElementById('pickFolderR');
   const imageFilesR = document.getElementById('imageFilesR');
   const imageFolderR = document.getElementById('imageFolderR');
   const applyImagesR = document.getElementById('applyImagesR');
   const dropImagesR = document.getElementById('dropImagesR');
   pickImagesR.addEventListener('click', ()=> imageFilesR.click());
+  pickFolderR.addEventListener('click', ()=> imageFolderR.click());
   imageFilesR.addEventListener('change', (e)=> handleImagesSide('R', e.target.files));
   imageFolderR.addEventListener('change', (e)=> handleImagesSide('R', e.target.files));
   wireDZ(dropImagesR, (files)=> handleImagesSide('R', files));
@@ -625,26 +604,33 @@ function wireSplit(){
 }
 wireSplit();
 
-// Video upload wiring
+// Video wiring
 const pickVideos = document.getElementById('pickVideos');
 const videoFiles = document.getElementById('videoFiles');
 const applyVideos = document.getElementById('applyVideos');
 const dropVideos = document.getElementById('dropVideos');
 pickVideos.addEventListener('click', ()=> videoFiles.click());
 videoFiles.addEventListener('change', (e)=> handleVideos(e.target.files));
-wireDZ(dropVideos, handleVideos);
+dropVideos.addEventListener('dragover', (e)=>{ e.preventDefault(); dropVideos.classList.add('highlight'); });
+dropVideos.addEventListener('dragleave', ()=> dropVideos.classList.remove('highlight'));
+dropVideos.addEventListener('drop', (e)=>{ e.preventDefault(); dropVideos.classList.remove('highlight'); handleVideos(e.dataTransfer.files); });
 applyVideos.addEventListener('click', ()=>{ if(videos.length){ nextVideo(); overlay.style.display='none'; sourceMode.value='videos'; } });
 
-// Pattern UI wiring
-['patLEn','patREn','patLHz1','patLHz2','patLHz3','patLHz4','patLRe1','patLRe2','patLRe3','patLRe4',
- 'patRHz1','patRHz2','patRHz3','patRHz4','patRRe1','patRRe2','patRRe3','patRRe4']
+// Pattern UI
+function readPatternUI(){
+  patLEn = document.getElementById('patLEn').checked;
+  patREn = document.getElementById('patREn').checked;
+  const read = (pfx)=> [1,2,3,4].map(i=> ({ hz:Number(document.getElementById(`${pfx}Hz${i}`).value)||1, rest:Number(document.getElementById(`${pfx}Re${i}`).value)||0 }));
+  patL = read('patL'); patR = read('patR');
+}
+['patLEn','patREn','patLHz1','patLHz2','patLHz3','patLHz4','patLRe1','patLRe2','patLRe3','patLRe4','patRHz1','patRHz2','patRHz3','patRHz4','patRRe1','patRRe2','patRRe3','patRRe4']
 .forEach(id=> document.getElementById(id)?.addEventListener('input', ()=> readPatternUI()));
-readPatternUI();
 ['patLEn','patREn'].forEach(id=> document.getElementById(id)?.addEventListener('change', ()=>{
   const l=document.getElementById('patLStat'); const r=document.getElementById('patRStat');
   if(l) l.textContent = document.getElementById('patLEn').checked ? 'ON' : 'OFF';
   if(r) r.textContent = document.getElementById('patREn').checked ? 'ON' : 'OFF';
 }));
+readPatternUI();
 
 // Slideshow controls
 const imgDwellEl = document.getElementById('imgDwell'); const imgDwellVal=document.getElementById('imgDwellVal');
@@ -667,19 +653,16 @@ window.addEventListener('resize', ()=>{
 
 // ========= Main Loop =========
 renderer.setAnimationLoop(function(){
-  // Ensure per-eye layer routing in XR
+  const sec = performance.now()/1000;
+
+  // Per-eye layer routing in XR
   const xrCam = renderer.xr.getCamera(camera);
   if(xrCam && xrCam.isArrayCamera && xrCam.cameras && xrCam.cameras.length>=2){
     const camL = xrCam.cameras[0];
     const camR = xrCam.cameras[1];
     camL.layers.enable(1); camL.layers.disable(2);
     camR.layers.enable(2); camR.layers.disable(1);
-  } else {
-    // Non-XR: show both layers
-    camera.layers.enableAll?.();
   }
-
-  const sec = performance.now()/1000;
 
   // Alternation
   if(altEnabled){
@@ -694,10 +677,12 @@ renderer.setAnimationLoop(function(){
       }
     } else if(altMode==='fixL'){
       document.getElementById('altCountdown').textContent = '패턴';
+      const TL = buildPatternTimeline(patR);
       const rightMetal = patREn ? samplePattern(patR, sec) : ((Math.floor(sec/Math.max(0.25,altHold))%2)===1);
       applyPerEyeState(fixLMetal, rightMetal);
     } else if(altMode==='fixR'){
       document.getElementById('altCountdown').textContent = '패턴';
+      const TL = buildPatternTimeline(patL);
       const leftMetal = patLEn ? samplePattern(patL, sec) : ((Math.floor(sec/Math.max(0.25,altHold))%2)===1);
       applyPerEyeState(leftMetal, fixRMetal);
     }
@@ -720,8 +705,13 @@ renderer.setAnimationLoop(function(){
 });
 
 // Init
+function applyFusionDefaults(){
+  setFusionDotSize(Number(document.getElementById('fusionDot').value));
+  setNonius(document.getElementById('noniusOn').checked);
+  applyFusion();
+}
 setSourceModeUI();
-setFusionDotSize(Number(document.getElementById('fusionDot').value));
+applyFusionDefaults();
 </script>
 </body>
 </html>
